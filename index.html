@@ -26,11 +26,11 @@
       </div>
       <div class="form-group">
         <label class="form-label">Supabase URL</label>
-        <input id="setup-url" class="input" type="url" placeholder="https://xxxx.supabase.co" autocomplete="off">
+        <input id="setup-url" class="input" type="url" placeholder="https://xxxx.supabase.co">
       </div>
       <div class="form-group">
         <label class="form-label">Supabase Anon Key</label>
-        <input id="setup-key" class="input" type="text" placeholder="eyJ..." autocomplete="off">
+        <input id="setup-key" class="input" type="text" placeholder="eyJ...">
       </div>
       <div id="setup-error" class="auth-error"></div>
       <button id="setup-submit" class="btn btn-primary">Conectar</button>
@@ -157,7 +157,7 @@
             <div class="list-item">
               <span class="list-item-label">Tema</span>
               <div class="segmented" id="theme-segmented">
-                <button class="seg-btn" data-theme-val="light">Claro</button>
+                <button class="seg-btn active" data-theme-val="light">Claro</button>
                 <button class="seg-btn" data-theme-val="dark">Escuro</button>
                 <button class="seg-btn" data-theme-val="auto">Auto</button>
               </div>
@@ -171,19 +171,19 @@
               <span class="list-item-label">E-mail</span>
               <span class="list-item-value text-sm" id="ajustes-email">—</span>
             </div>
-            <div class="list-item" id="ajustes-logout" style="cursor:pointer">
-              <span class="list-item-label" style="color:var(--destructive)">Sair</span>
+            <div class="list-item" id="ajustes-logout">
+              <span class="list-item-label btn-destructive">Sair</span>
             </div>
           </div>
         </div>
         <div class="list-group">
           <div class="list-group-header">Dados</div>
           <div class="list-group-body">
-            <div class="list-item" id="ajustes-export" style="cursor:pointer">
-              <span class="list-item-label">Exportar todos os dados (CSV)</span>
+            <div class="list-item" id="ajustes-export">
+              <span class="list-item-label">Exportar CSV</span>
               <span class="list-item-arrow"><i data-lucide="chevron-right"></i></span>
             </div>
-            <div class="list-item" id="ajustes-reconfig" style="cursor:pointer">
+            <div class="list-item" id="ajustes-reconfig">
               <span class="list-item-label">Reconfigurar Supabase</span>
               <span class="list-item-arrow"><i data-lucide="chevron-right"></i></span>
             </div>
@@ -197,7 +197,7 @@
               <span class="list-item-value text-sm">v1.0</span>
             </div>
             <div class="list-item">
-              <span class="list-item-label" style="color:var(--text-2)">Felipe &amp; Teresa</span>
+              <span class="list-item-label text-2">Felipe &amp; Teresa</span>
             </div>
           </div>
         </div>
@@ -214,21 +214,18 @@
     <div id="fca-overlay" class="hidden">
       <div id="fca-sheet">
         <div class="fca-handle"></div>
-
         <div class="fca-type-toggle">
           <button class="fca-type-btn" id="fca-income-btn">Receita</button>
           <button class="fca-type-btn active-expense" id="fca-expense-btn">Despesa</button>
         </div>
-
         <div class="fca-amount-wrap">
           <div class="fca-amount-label">Valor</div>
-          <input id="fca-amount" type="text" inputmode="decimal" placeholder="0,00" autocomplete="off">
+          <input id="fca-amount" type="text" inputmode="decimal" placeholder="R$ 0,00" autocomplete="off">
         </div>
-
-        <div class="row mb-16" style="gap:12px;align-items:flex-start">
-          <div style="flex:0 0 auto">
+        <div class="row mb-16" style="gap:10px">
+          <div style="flex:1">
             <div class="form-label">Data</div>
-            <input id="fca-date" class="input" type="date" style="width:auto">
+            <input id="fca-date" class="input" type="date">
           </div>
           <div style="flex:1">
             <div class="form-label">Pessoa</div>
@@ -239,12 +236,10 @@
             </div>
           </div>
         </div>
-
         <div id="fca-cat-section">
           <div class="form-label mb-8">Categoria</div>
           <div class="fca-cat-grid" id="fca-cat-grid"></div>
         </div>
-
         <div class="form-label mb-8">Pagamento</div>
         <div class="chip-group mb-16" id="fca-pay-chips">
           <button class="chip" data-val="Pix">Pix</button>
@@ -252,25 +247,22 @@
           <button class="chip" data-val="Débito">Débito</button>
           <button class="chip" data-val="Dinheiro">Dinheiro</button>
         </div>
-
         <div id="fca-installment-section" class="hidden">
           <div class="form-label mb-8">Parcelamento</div>
-          <div style="background:var(--surface-raised);border-radius:var(--r-input);padding:12px 14px;margin-bottom:16px">
+          <div id="fca-inst-wrap" style="background:var(--surface-raised);border-radius:var(--r-input);padding:12px 14px;margin-bottom:16px">
             <div class="installment-row">
               <span>Parcelar em</span>
               <input type="number" id="fca-inst-count" class="installment-count" value="1" min="1" max="60">
-              <span>x =</span>
-              <span id="fca-inst-per" style="font-weight:600">R$ 0,00</span>
-              <span>/mês</span>
+              <span>x</span>
+              <span id="fca-inst-per">R$ 0,00</span>
+              <span>/ mês</span>
             </div>
             <div class="installment-summary" id="fca-inst-summary"></div>
           </div>
         </div>
-
         <div class="form-group">
           <input id="fca-description" class="input" type="text" placeholder="Descrição (opcional)" autocomplete="off">
         </div>
-
         <button id="fca-submit" class="btn btn-primary" style="margin-top:8px" disabled>Lançar</button>
       </div>
     </div>
@@ -298,9 +290,9 @@
     <!-- TOAST -->
     <div class="toast" id="toast"></div>
 
-  </div>
+  </div><!-- #screen-app -->
 
-</div>
+</div><!-- #app -->
 
 <script type="module" src="js/app.js"></script>
 </body>
