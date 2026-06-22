@@ -218,12 +218,18 @@ async function handleSubmit() {
       showToast(status === 'provisao' ? 'Provisão registrada' : 'Lançamento salvo');
     } else {
       const groupId = crypto.randomUUID();
-      const perAmount = Math.round(amount / n * 100) / 100;
+      // Split in integer cents so the parcels always sum back to the total;
+      // the last parcel absorbs the rounding remainder.
+      const baseCents = Math.floor(amountCents / n);
       const rows = Array.from({ length: n }, (_, i) => {
         const dt = addMonths(y, m, i);
-        const dateI = `${dt.year}-${String(dt.month).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+        // Clamp the day to the month length so e.g. a purchase on the 31st
+        // doesn't produce an invalid date (2026-02-31) in shorter months.
+        const day = Math.min(d, new Date(dt.year, dt.month, 0).getDate());
+        const dateI = `${dt.year}-${String(dt.month).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+        const cents = i === n - 1 ? amountCents - baseCents * (n - 1) : baseCents;
         const status = dateI > today ? 'provisao' : 'realizado';
-        return { date: dateI, type: 'expense', amount: perAmount, category: cat,
+        return { date: dateI, type: 'expense', amount: cents / 100, category: cat,
           person: currentPerson, description: desc, payment_method: 'Crédito',
           installment_current: i + 1, installment_total: n, installment_group_id: groupId, status };
       });
