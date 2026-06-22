@@ -37,6 +37,7 @@ export function initFCA() {
   });
 
   document.getElementById('fca-cat-select').addEventListener('change', updateSubmitState);
+  document.getElementById('fca-description').addEventListener('input', updateSubmitState);
 
   document.getElementById('fca-pay-chips').addEventListener('click', e => {
     const btn = e.target.closest('[data-val]'); if (!btn) return;
@@ -163,7 +164,12 @@ function closeFCA() {
 }
 
 function updateSubmitState() {
-  const ok = (amountCents / 100) > 0 && currentPerson && document.getElementById('fca-cat-select').value;
+  const cat = document.getElementById('fca-cat-select').value;
+  const descEl = document.getElementById('fca-description');
+  // Gate: "Outros" requires a description so generic expenses stay traceable
+  const descRequired = cat === 'Outros';
+  descEl.placeholder = descRequired ? 'Descrição (obrigatória)' : 'Descrição (opcional)';
+  const ok = (amountCents / 100) > 0 && currentPerson && cat && !(descRequired && !descEl.value.trim());
   document.getElementById('fca-submit').disabled = !ok;
 }
 
@@ -189,6 +195,7 @@ async function handleSubmit() {
   const dateStr = document.getElementById('fca-date').value;
   const desc = document.getElementById('fca-description').value.trim() || null;
   const cat = document.getElementById('fca-cat-select').value;
+  if (cat === 'Outros' && !desc) { showToast('Descreva o gasto em "Outros"', 'error'); return; }
   const n = currentPay === 'Crédito' ? installCount : 1;
   const [y, m, d] = dateStr.split('-').map(Number);
   const today = todayStr();
