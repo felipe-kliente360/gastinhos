@@ -585,6 +585,23 @@ select.input { appearance: none; background-image: url("data:image/svg+xml,%3Csv
   color: var(--text-3);
   pointer-events: none;
 }
+.hist-summary { display: flex; gap: 10px; margin-bottom: 10px; }
+.hist-sum-card {
+  flex: 1;
+  min-width: 0;
+  background: var(--surface);
+  border-radius: var(--r-card);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  padding: 10px 14px;
+  min-height: 52px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+}
+[data-theme="dark"] .hist-sum-card { box-shadow: none; }
+.hist-sum-val { font-size: 19px; font-weight: 700; color: var(--text-1); white-space: nowrap; }
+.hist-sum-label { font-size: 11px; color: var(--text-2); text-transform: uppercase; letter-spacing: 0.04em; }
 .hist-table-wrap {
   background: var(--surface);
   border-radius: var(--r-card);

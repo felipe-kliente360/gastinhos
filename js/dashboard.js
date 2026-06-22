@@ -60,8 +60,6 @@ export async function loadDashboard() {
   const pctReal = budget>0 ? Math.min(realizado/budget*100, 100) : 0;
   const pctProv = budget>0 ? Math.min(provisao/budget*100, 100-pctReal) : 0;
   const pctTotal = budget>0 ? projetado/budget*100 : 0;
-  const criticalOver = realizado > budget;
-  const overBudget   = projetado > budget;
   const barColor = pctTotal>=100 ? '#EF4444' : pctTotal>=80 ? '#F59E0B' : '#6366F1';
   const provColor = pctTotal>=100 ? 'rgba(239,68,68,0.3)' : pctTotal>=80 ? 'rgba(245,158,11,0.3)' : 'rgba(99,102,241,0.25)';
 
@@ -74,12 +72,6 @@ export async function loadDashboard() {
   const realizadoLine = `<span style="color:var(--expense-fg);font-weight:600">${formatBRL(realizado)}</span><span style="color:var(--text-2)"> realizado</span>`;
   const provisaoLine  = provisao > 0 ? ` <span style="color:var(--text-2)">+</span> <span style="color:var(--text-2);font-weight:500">${formatBRL(provisao)}</span><span style="color:var(--text-2)"> provisão</span>` : '';
   document.getElementById('dash-kpis').innerHTML = `
-    ${overBudget ? `<div class="budget-alert${criticalOver?' critical':''}" style="grid-column:span 2">
-      <i data-lucide="${criticalOver?'alert-octagon':'triangle-alert'}"></i>
-      <span>${criticalOver
-        ? `Realizado excede o orçamento em ${formatBRL(realizado-budget)}`
-        : `Projetado excede o orçamento em ${formatBRL(projetado-budget)}`
-      }</span></div>` : ''}
     <div class="budget-bar-card" style="grid-column:span 2">
       <div class="budget-bar-header">
         <span class="kpi-label">Orçamento Mensal <span style="color:var(--text-3);font-weight:500">(${budgetLabel})</span></span>

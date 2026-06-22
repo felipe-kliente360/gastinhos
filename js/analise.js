@@ -29,7 +29,10 @@ export async function loadAnalise() {
   }
 
   const metricKey = metric === 'count' ? 'count' : metric === 'avg' ? 'avg' : 'sum';
-  const entries = Object.entries(map).sort((a,b) => b[1][metricKey] - a[1][metricKey]);
+  // Month: always chronological (key is YYYY-MM). Other dimensions: by total R$ desc.
+  const entries = Object.entries(map).sort((a, b) =>
+    dim === 'month' ? a[0].localeCompare(b[0]) : b[1].sum - a[1].sum
+  );
   const labels = entries.map(([k]) => dim === 'month' ? monthShort(...k.split('-').map(Number)) : k);
   const values = entries.map(([,v]) => metric === 'count' ? v.count : metric === 'avg' ? v.avg : v.sum);
   const total = values.reduce((s,v) => s+v, 0);

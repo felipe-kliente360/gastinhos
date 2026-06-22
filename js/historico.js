@@ -5,11 +5,10 @@ let txData = [];
 let sortCol = 'date';
 let sortDir = 'desc';
 let filterPerson = '';
-let filterStatus = '';
 let filterFrom = '';
 let filterTo = '';
-let filterCat = '';
-let filterPay = '';
+let filterCat = new Set();
+let filterPay = new Set();
 let searchTerm = '';
 
 export function setHistoricoPerson(p) { filterPerson = p; }
@@ -23,19 +22,21 @@ export function initHistorico() {
   filterFrom = ym;
   filterTo = ym;
 
-  document.getElementById('hist-status-chips').addEventListener('click', e => {
-    const btn = e.target.closest('[data-val]');
-    if (!btn) return;
-    document.querySelectorAll('#hist-status-chips .chip').forEach(c => c.classList.remove('active'));
-    btn.classList.add('active');
-    filterStatus = btn.dataset.val;
+  // Categoria/Pagamento são multisseleção (chips toggle), aplicados no "Aplicar"
+  document.getElementById('hist-cat-chips').addEventListener('click', e => {
+    const btn = e.target.closest('[data-val]'); if (btn) btn.classList.toggle('active');
+  });
+  document.getElementById('hist-pay-chips').addEventListener('click', e => {
+    const btn = e.target.closest('[data-val]'); if (btn) btn.classList.toggle('active');
   });
 
-  document.getElementById('hist-apply').onclick = loadHistorico;
+  document.getElementById('hist-apply').onclick = () => {
+    filterCat = new Set([...document.querySelectorAll('#hist-cat-chips .chip.active')].map(c => c.dataset.val));
+    filterPay = new Set([...document.querySelectorAll('#hist-pay-chips .chip.active')].map(c => c.dataset.val));
+    document.getElementById('hist-filter-bar').classList.remove('open');
+    loadHistorico();
+  };
 
-  // Client-side refinements over the loaded period — no refetch needed
-  document.getElementById('hist-cat').addEventListener('change', e => { filterCat = e.target.value; renderTable(); });
-  document.getElementById('hist-pay').addEventListener('change', e => { filterPay = e.target.value; renderTable(); });
   document.getElementById('hist-search').addEventListener('input', e => { searchTerm = e.target.value; renderTable(); });
 
   document.querySelectorAll('.hist-table th[data-col]').forEach(th => {
@@ -60,7 +61,7 @@ export async function loadHistorico() {
   const start = filterFrom ? filterFrom + '-01' : undefined;
   const end = filterTo ? (() => { const [y, m] = filterTo.split('-'); return new Date(+y, +m, 0).toISOString().slice(0, 10); })() : undefined;
   try {
-    txData = await getTx({ start, end, person: filterPerson || undefined, status: filterStatus || undefined });
+    txData = await getTx({ start, end, person: filterPerson || undefined });
     renderTable();
   } catch (e) { showToast('Erro ao carregar histórico', 'error'); }
 }
@@ -70,14 +71,18 @@ function renderTable() {
   // the underlying fields, not just what's shown — description, category, person, pagamento)
   const words = searchTerm.trim().toLowerCase().split(/\s+/).filter(Boolean);
   const filtered = txData.filter(r => {
-    if (filterCat && (r.category || '') !== filterCat) return false;
-    if (filterPay && (r.payment_method || '') !== filterPay) return false;
+    if (filterCat.size && !filterCat.has(r.category)) return false;
+    if (filterPay.size && !filterPay.has(r.payment_method)) return false;
     if (words.length) {
       const hay = [r.description, r.category, r.person, r.payment_method].join(' ').toLowerCase();
       if (!words.every(w => hay.includes(w))) return false;
     }
     return true;
   });
+
+  // Realtime summary of what's being shown
+  document.getElementById('hist-count').textContent = filtered.length;
+  document.getElementById('hist-total').textContent = formatBRL(filtered.reduce((s, r) => s + Number(r.amount), 0));
 
   const sorted = filtered.sort((a, b) => {
     let va = a[sortCol], vb = b[sortCol];
