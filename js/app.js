@@ -91,6 +91,7 @@ async function appScreen() {
   await initAjustes(sbClient);
   setupTabs();
   lucide.createIcons();
+  setHeaderTitle('dashboard');
   loadDashboard();
 
   window.addEventListener('gastinhos:tx-saved', () => {
@@ -126,6 +127,14 @@ function setupPersonPopover(popoverId, btnId, onChange) {
   document.addEventListener('click', () => pop?.classList.remove('open'));
 }
 
+function setHeaderTitle(tab) {
+  const titles = { dashboard: 'Dashboard', analise: 'Análise', historico: 'Histórico', ajustes: 'Ajustes' };
+  const icons = { dashboard: 'layout-dashboard', analise: 'bar-chart-2', historico: 'list', ajustes: 'settings' };
+  const el = document.getElementById('header-title');
+  el.innerHTML = `<i data-lucide="${icons[tab]}"></i>${titles[tab]}`;
+  lucide.createIcons({ nodes: [el] });
+}
+
 function setupTabs() {
   const titles = { dashboard: 'Dashboard', analise: 'Análise', historico: 'Histórico', ajustes: 'Ajustes' };
 
@@ -136,7 +145,7 @@ function setupTabs() {
       btn.classList.add('active');
       document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
       document.getElementById(`tab-${tab}`).classList.add('active');
-      document.getElementById('header-title').textContent = titles[tab];
+      setHeaderTitle(tab);
 
       const ctrl = document.getElementById('header-controls');
 

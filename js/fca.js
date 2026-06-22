@@ -6,8 +6,6 @@ const ALL_CATS = ['Moradia','Mercado','Alimentação','Transporte','Saúde','Laz
 
 let currentPay = 'Crédito';
 let currentPerson = '';
-let currentCat = '';
-let catOrder = [...ALL_CATS];
 let amountCents = 0;
 let updatingAmount = false;
 let editId = null;
@@ -19,7 +17,6 @@ export function initFCA() {
     if (e.target === document.getElementById('fca-overlay')) closeFCA();
   });
 
-  // Cent-accumulation amount input
   document.getElementById('fca-amount').addEventListener('input', e => {
     if (updatingAmount) return;
     updatingAmount = true;
@@ -31,7 +28,6 @@ export function initFCA() {
     updateInstallmentCalc();
   });
 
-  // Person chips
   document.getElementById('fca-person-chips').addEventListener('click', e => {
     const btn = e.target.closest('[data-val]'); if (!btn) return;
     document.querySelectorAll('#fca-person-chips .chip').forEach(c => c.classList.remove('active'));
@@ -40,16 +36,8 @@ export function initFCA() {
     updateSubmitState();
   });
 
-  // Category chips (delegated — chips built dynamically)
-  document.getElementById('fca-cat-chips').addEventListener('click', e => {
-    const btn = e.target.closest('[data-cat]'); if (!btn) return;
-    document.querySelectorAll('#fca-cat-chips .chip').forEach(c => c.classList.remove('active'));
-    btn.classList.add('active');
-    currentCat = btn.dataset.cat;
-    updateSubmitState();
-  });
+  document.getElementById('fca-cat-select').addEventListener('change', updateSubmitState);
 
-  // Payment chips
   document.getElementById('fca-pay-chips').addEventListener('click', e => {
     const btn = e.target.closest('[data-val]'); if (!btn) return;
     document.querySelectorAll('#fca-pay-chips .chip').forEach(c => c.classList.remove('active'));
@@ -59,10 +47,8 @@ export function initFCA() {
     updateInstallmentCalc();
   });
 
-  // Date change → update installment calc
   document.getElementById('fca-date').addEventListener('change', updateInstallmentCalc);
 
-  // Installment +/- buttons
   document.getElementById('fca-inst-minus').addEventListener('click', () => {
     if (installCount > 1) { installCount--; syncInstDisplay(); }
   });
@@ -71,10 +57,8 @@ export function initFCA() {
   });
 
   document.getElementById('fca-submit').addEventListener('click', handleSubmit);
-
   window.addEventListener('gastinhos:edit-tx', e => openEditFCA(e.detail));
 
-  // Load category frequency order once (async, non-blocking)
   refreshCatOrder();
 }
 
@@ -87,15 +71,16 @@ async function refreshCatOrder() {
       .map(([k]) => k)
       .filter(k => ALL_CATS.includes(k));
     const rest = ALL_CATS.filter(c => !ranked.includes(c));
-    catOrder = [...ranked, ...rest];
-    buildCatChips();
+    populateCatSelect([...ranked, ...rest]);
   } catch {}
 }
 
-function buildCatChips() {
-  document.getElementById('fca-cat-chips').innerHTML = catOrder
-    .map(c => `<button class="chip${c === currentCat ? ' active' : ''}" data-cat="${c}">${c}</button>`)
-    .join('');
+function populateCatSelect(order = ALL_CATS) {
+  const sel = document.getElementById('fca-cat-select');
+  const prev = sel.value;
+  sel.innerHTML = '<option value="">— Selecione —</option>' +
+    order.map(c => `<option value="${c}">${c}</option>`).join('');
+  if (prev && order.includes(prev)) sel.value = prev;
 }
 
 function updateInstCtrl() {
@@ -117,17 +102,13 @@ function openFCA() {
   document.getElementById('fca-inst-display').textContent = '1';
   document.getElementById('fca-inst-summary').textContent = '';
 
-  // Person: memory → default person → blank
   const defaultPerson = localStorage.getItem('gastinhos_default_person') || '';
   currentPerson = mem.person || defaultPerson;
   document.querySelectorAll('#fca-person-chips .chip').forEach(c =>
     c.classList.toggle('active', c.dataset.val === currentPerson));
 
-  // Category: memory
-  currentCat = mem.cat || '';
-  buildCatChips();
+  document.getElementById('fca-cat-select').value = mem.cat || '';
 
-  // Payment: always default to Crédito
   currentPay = 'Crédito';
   document.querySelectorAll('#fca-pay-chips .chip').forEach(c => c.classList.toggle('active', c.dataset.val === currentPay));
   updateInstCtrl();
@@ -146,13 +127,11 @@ function openEditFCA(tx) {
   document.getElementById('fca-amount').value = formatBRL(amountCents / 100);
   document.getElementById('fca-date').value = tx.date;
   document.getElementById('fca-description').value = tx.description || '';
+  document.getElementById('fca-cat-select').value = tx.category || '';
 
   currentPerson = tx.person || '';
   document.querySelectorAll('#fca-person-chips .chip').forEach(c =>
     c.classList.toggle('active', c.dataset.val === currentPerson));
-
-  currentCat = tx.category || '';
-  buildCatChips();
 
   currentPay = tx.payment_method || 'Crédito';
   document.querySelectorAll('#fca-pay-chips .chip').forEach(c => c.classList.toggle('active', c.dataset.val === currentPay));
@@ -171,7 +150,7 @@ function closeFCA() {
 }
 
 function updateSubmitState() {
-  const ok = (amountCents / 100) > 0 && currentPerson && currentCat;
+  const ok = (amountCents / 100) > 0 && currentPerson && document.getElementById('fca-cat-select').value;
   document.getElementById('fca-submit').disabled = !ok;
 }
 
@@ -196,6 +175,7 @@ async function handleSubmit() {
   if (!amount || amount <= 0) return;
   const dateStr = document.getElementById('fca-date').value;
   const desc = document.getElementById('fca-description').value.trim() || null;
+  const cat = document.getElementById('fca-cat-select').value;
   const n = currentPay === 'Crédito' ? installCount : 1;
   const [y, m, d] = dateStr.split('-').map(Number);
   const today = todayStr();
@@ -207,13 +187,13 @@ async function handleSubmit() {
     if (editId) {
       const status = dateStr > today ? 'provisao' : 'realizado';
       await updateTx(editId, {
-        date: dateStr, amount, category: currentCat, person: currentPerson,
+        date: dateStr, amount, category: cat, person: currentPerson,
         description: desc, payment_method: currentPay || null, status
       });
       showToast('Alterações salvas');
     } else if (n <= 1) {
       const status = dateStr > today ? 'provisao' : 'realizado';
-      await addTx({ date: dateStr, type: 'expense', amount, category: currentCat,
+      await addTx({ date: dateStr, type: 'expense', amount, category: cat,
         person: currentPerson, description: desc, payment_method: currentPay || null, status });
       showToast(status === 'provisao' ? 'Provisão registrada' : 'Lançamento salvo');
     } else {
@@ -223,14 +203,14 @@ async function handleSubmit() {
         const dt = addMonths(y, m, i);
         const dateI = `${dt.year}-${String(dt.month).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
         const status = dateI > today ? 'provisao' : 'realizado';
-        return { date: dateI, type: 'expense', amount: perAmount, category: currentCat,
+        return { date: dateI, type: 'expense', amount: perAmount, category: cat,
           person: currentPerson, description: desc, payment_method: 'Crédito',
           installment_current: i + 1, installment_total: n, installment_group_id: groupId, status };
       });
       await addTxBatch(rows);
       showToast(`${n} parcelas criadas`);
     }
-    localStorage.setItem(MEM_KEY, JSON.stringify({ person: currentPerson, cat: currentCat }));
+    localStorage.setItem(MEM_KEY, JSON.stringify({ person: currentPerson, cat }));
     closeFCA();
     window.dispatchEvent(new CustomEvent('gastinhos:tx-saved'));
   } catch (e) {

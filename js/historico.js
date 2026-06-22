@@ -1,5 +1,5 @@
 import { getTx, deleteTx, deleteGroup } from './db.js';
-import { formatDate, formatBRL, showToast, exportCSV, monthLabel } from './utils.js';
+import { formatDate, formatBRL, showToast } from './utils.js';
 
 let txData = [];
 let sortCol = 'date';
@@ -20,7 +20,6 @@ export function initHistorico() {
   filterFrom = ym;
   filterTo = ym;
 
-  // status chips
   document.getElementById('hist-status-chips').addEventListener('click', e => {
     const btn = e.target.closest('[data-val]');
     if (!btn) return;
@@ -31,13 +30,17 @@ export function initHistorico() {
 
   document.getElementById('hist-apply').onclick = loadHistorico;
 
-  // sort
   document.querySelectorAll('.hist-table th[data-col]').forEach(th => {
     th.addEventListener('click', () => {
       if (sortCol === th.dataset.col) sortDir = sortDir === 'asc' ? 'desc' : 'asc';
       else { sortCol = th.dataset.col; sortDir = 'desc'; }
       renderTable();
     });
+  });
+
+  // Close ctx menu on outside click
+  document.addEventListener('click', () => {
+    document.getElementById('hist-ctx-menu')?.classList.remove('open');
   });
 
   loadHistorico();
@@ -74,62 +77,61 @@ function renderTable() {
   empty.classList.add('hidden');
 
   tbody.innerHTML = sorted.map(r => `
-    <tr data-id="${r.id}" data-group="${r.installment_group_id || ''}" data-date="${r.date}" class="tx-row${r.status === 'provisao' ? ' tx-provisao' : ''}">
+    <tr data-id="${r.id}" class="tx-row${r.status === 'provisao' ? ' tx-provisao' : ''}">
       <td>${formatDate(r.date)}</td>
       <td><span class="tx-desc">${r.description || r.category || '—'}</span>${r.installment_total ? `<span class="inst-badge">${r.installment_current}/${r.installment_total}</span>` : ''}${r.status === 'provisao' ? '<span class="provisao-badge">Prov</span>' : ''}</td>
       <td><span class="person-pill">${r.person}</span></td>
       <td style="text-align:right"><span class="tx-amount ${r.status === 'provisao' ? 'provisao-val' : 'expense'}">${formatBRL(r.amount)}</span></td>
-      <td><button class="row-dots-btn" data-id="${r.id}">⋮</button></td>
-    </tr>
-    <tr class="action-row" data-for="${r.id}" style="display:none">
-      <td colspan="5">
-        <div style="display:flex;gap:8px;padding:8px 12px;background:var(--surface-raised)">
-          <button class="act-edit" data-id="${r.id}" style="font-size:13px;color:var(--accent-fg);background:none;border:none;cursor:pointer;padding:4px 8px">Editar</button>
-          <button class="del-one" data-id="${r.id}" style="font-size:13px;color:#EF4444;background:none;border:none;cursor:pointer;padding:4px 8px">Excluir</button>
-          ${r.installment_group_id ? `<button class="del-group" data-group="${r.installment_group_id}" data-date="${r.date}" style="font-size:13px;color:#EF4444;background:none;border:none;cursor:pointer;padding:4px 8px">Excluir esta e próximas</button>` : ''}
-          <button class="act-cancel" data-id="${r.id}" style="font-size:13px;color:var(--text-2);background:none;border:none;cursor:pointer;padding:4px 8px;margin-left:auto">Cancelar</button>
-        </div>
-      </td>
+      <td><button class="row-dots-btn" data-id="${r.id}" data-group="${r.installment_group_id || ''}" data-date="${r.date}">⋮</button></td>
     </tr>
   `).join('');
 
-  // row-dots button toggles action row
   tbody.querySelectorAll('.row-dots-btn').forEach(btn => {
     btn.addEventListener('click', e => {
       e.stopPropagation();
       const id = btn.dataset.id;
-      const actionRow = tbody.querySelector(`.action-row[data-for="${id}"]`);
-      if (actionRow.style.display === 'none') {
-        tbody.querySelectorAll('.action-row').forEach(r => r.style.display = 'none');
-        actionRow.style.display = '';
-      } else {
-        actionRow.style.display = 'none';
+      const group = btn.dataset.group;
+      const date = btn.dataset.date;
+      const tx = txData.find(r => String(r.id) === String(id));
+      const menu = document.getElementById('hist-ctx-menu');
+
+      const groupBtn = document.getElementById('ctx-delete-group');
+      groupBtn.style.display = group ? 'flex' : 'none';
+
+      document.getElementById('ctx-edit').onclick = () => {
+        menu.classList.remove('open');
+        if (tx) window.dispatchEvent(new CustomEvent('gastinhos:edit-tx', { detail: tx }));
+      };
+      document.getElementById('ctx-delete').onclick = async () => {
+        menu.classList.remove('open');
+        await deleteTx(id);
+        showToast('Transação excluída');
+        loadHistorico();
+      };
+      if (group) {
+        groupBtn.onclick = async () => {
+          menu.classList.remove('open');
+          await deleteGroup(group, date);
+          showToast('Parcelas excluídas');
+          loadHistorico();
+        };
       }
+
+      // Smart positioning: open up if near bottom
+      const rect = btn.getBoundingClientRect();
+      const menuH = group ? 132 : 88;
+      const spaceBelow = window.innerHeight - rect.bottom;
+
+      menu.style.right = '12px';
+      menu.style.left = 'auto';
+      if (spaceBelow < menuH + 16) {
+        menu.style.top = 'auto';
+        menu.style.bottom = `${window.innerHeight - rect.top + 4}px`;
+      } else {
+        menu.style.bottom = 'auto';
+        menu.style.top = `${rect.bottom + 4}px`;
+      }
+      menu.classList.add('open');
     });
   });
-
-  // Edit button
-  tbody.querySelectorAll('.act-edit').forEach(btn => btn.addEventListener('click', e => {
-    e.stopPropagation();
-    const id = btn.dataset.id;
-    const tx = txData.find(r => String(r.id) === String(id));
-    if (tx) window.dispatchEvent(new CustomEvent('gastinhos:edit-tx', { detail: tx }));
-  }));
-
-  tbody.querySelectorAll('.del-one').forEach(btn => btn.addEventListener('click', async e => {
-    e.stopPropagation();
-    await deleteTx(btn.dataset.id);
-    showToast('Transação excluída');
-    loadHistorico();
-  }));
-  tbody.querySelectorAll('.del-group').forEach(btn => btn.addEventListener('click', async e => {
-    e.stopPropagation();
-    await deleteGroup(btn.dataset.group, btn.dataset.date);
-    showToast('Parcelas excluídas');
-    loadHistorico();
-  }));
-  tbody.querySelectorAll('.act-cancel').forEach(btn => btn.addEventListener('click', e => {
-    e.stopPropagation();
-    tbody.querySelector(`.action-row[data-for="${btn.dataset.id}"]`).style.display = 'none';
-  }));
 }

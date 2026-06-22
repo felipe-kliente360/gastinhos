@@ -9,6 +9,7 @@
   <meta name="theme-color" content="#F2F2F7" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
   <title>Gastinhos</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="stylesheet" href="style.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-treemap@2/dist/chartjs-chart-treemap.min.js"></script>
@@ -94,8 +95,8 @@
             <option value="12">12 meses</option>
           </select>
           <select id="an-chart-type" class="analise-select">
-            <option value="bar-h" selected>Barra horiz.</option>
-            <option value="bar-v">Barra vert.</option>
+            <option value="bar-h" selected>Barra</option>
+            <option value="bar-v">Coluna</option>
             <option value="doughnut">Rosca</option>
             <option value="radar">Radar</option>
             <option value="polar">Polar</option>
@@ -240,13 +241,13 @@
           <input id="fca-amount" type="text" inputmode="numeric" placeholder="R$ 0,00" autocomplete="off">
         </div>
         <div class="fca-inst-below" id="fca-inst-summary"></div>
-        <div class="fca-date-person-row mb-12">
+        <div class="fca-date-person-row mb-20">
           <div>
-            <div class="form-label">Data</div>
-            <input id="fca-date" class="input input-sm" type="date" style="width:136px">
+            <div class="fca-label">Data</div>
+            <input id="fca-date" class="input input-sm" type="date" style="width:140px">
           </div>
-          <div>
-            <div class="form-label">Pessoa</div>
+          <div style="flex:1">
+            <div class="fca-label">Pessoa</div>
             <div class="chip-group" id="fca-person-chips">
               <button class="chip" data-val="Felipe">Felipe</button>
               <button class="chip" data-val="Teresa">Teresa</button>
@@ -254,10 +255,17 @@
             </div>
           </div>
         </div>
-        <div class="form-label mb-6">Categoria</div>
-        <div class="chip-group mb-12" id="fca-cat-chips"></div>
-        <div class="form-label mb-6">Pagamento</div>
-        <div class="fca-pay-row mb-12" id="fca-pay-chips">
+        <div class="fca-label">Categoria</div>
+        <select id="fca-cat-select" class="input mb-20">
+          <option value="">— Selecione —</option>
+          <option>Moradia</option><option>Mercado</option><option>Alimentação</option>
+          <option>Transporte</option><option>Saúde</option><option>Lazer</option>
+          <option>Educação</option><option>Vestuário</option><option>Assinaturas</option>
+          <option>Investimento</option><option>Financeiro</option><option>Pet</option>
+          <option>Presente/Doação</option><option>Outros</option>
+        </select>
+        <div class="fca-label">Pagamento</div>
+        <div class="fca-pay-row mb-20" id="fca-pay-chips">
           <button class="chip" data-val="Dinheiro">Dinheiro</button>
           <button class="chip" data-val="Pix">Pix</button>
           <button class="chip" data-val="Débito">Débito</button>
@@ -268,9 +276,16 @@
             <button class="inst-step" id="fca-inst-plus">+</button>
           </div>
         </div>
-        <input id="fca-description" class="input mb-12" type="text" placeholder="Descrição (opcional)" autocomplete="off">
+        <input id="fca-description" class="input mb-20" type="text" placeholder="Descrição (opcional)" autocomplete="off">
         <button id="fca-submit" class="btn btn-primary" disabled>Lançar</button>
       </div>
+    </div>
+
+    <!-- FLOATING CONTEXT MENU (historico) -->
+    <div id="hist-ctx-menu">
+      <button class="ctx-item" id="ctx-edit">Editar</button>
+      <button class="ctx-item ctx-danger" id="ctx-delete">Excluir</button>
+      <button class="ctx-item ctx-danger" id="ctx-delete-group">Excluir esta e próximas</button>
     </div>
 
     <!-- BOTTOM TAB BAR -->
