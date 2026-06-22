@@ -54,7 +54,6 @@
       </div>
       <div id="login-error" class="auth-error"></div>
       <button id="login-submit" class="btn btn-primary">Entrar</button>
-      <button id="setup-reset" class="btn btn-ghost" style="margin-top:8px">Reconfigurar Supabase</button>
     </div>
   </div>
 
@@ -117,7 +116,6 @@
           <div class="form-group mb-8">
             <div class="form-label">Pessoa</div>
             <div class="chip-group" id="hist-person-chips">
-              <button class="chip active" data-val="">Todos</button>
               <button class="chip" data-val="Felipe">Felipe</button>
               <button class="chip" data-val="Teresa">Teresa</button>
               <button class="chip" data-val="Casal">Casal</button>
@@ -141,6 +139,7 @@
                 <th data-col="description">Descrição</th>
                 <th data-col="person">Pessoa</th>
                 <th data-col="amount" style="text-align:right">Valor</th>
+                <th style="width:32px"></th>
               </tr>
             </thead>
             <tbody id="hist-tbody"></tbody>
@@ -158,7 +157,7 @@
               <span class="list-item-label">Mensal</span>
               <div style="display:flex;align-items:center;gap:6px;flex:1;justify-content:flex-end">
                 <span style="font-size:14px;color:var(--text-2)">R$</span>
-                <input id="ajustes-budget" class="input" type="number" min="0" step="100" style="width:120px;text-align:right;padding:6px 10px;font-size:15px;font-weight:600">
+                <input id="ajustes-budget" class="input" type="text" inputmode="numeric" style="width:120px;text-align:right;padding:6px 10px;font-size:15px;font-weight:600">
               </div>
             </div>
           </div>
@@ -173,6 +172,10 @@
                 <button class="seg-btn" data-theme-val="dark">Escuro</button>
                 <button class="seg-btn" data-theme-val="auto">Auto</button>
               </div>
+            </div>
+            <div class="list-item">
+              <span class="list-item-label">Cor de destaque</span>
+              <input type="color" id="ajustes-accent" class="color-input" value="#6366F1">
             </div>
           </div>
         </div>
@@ -193,10 +196,6 @@
           <div class="list-group-body">
             <div class="list-item" id="ajustes-export">
               <span class="list-item-label">Exportar CSV</span>
-              <span class="list-item-arrow"><i data-lucide="chevron-right"></i></span>
-            </div>
-            <div class="list-item" id="ajustes-reconfig">
-              <span class="list-item-label">Reconfigurar Supabase</span>
               <span class="list-item-arrow"><i data-lucide="chevron-right"></i></span>
             </div>
           </div>
@@ -228,28 +227,42 @@
         <div class="fca-handle"></div>
         <div class="fca-amount-wrap">
           <div class="fca-amount-label">Valor</div>
-          <input id="fca-amount" type="text" inputmode="decimal" placeholder="R$ 0,00" autocomplete="off">
+          <input id="fca-amount" type="text" inputmode="numeric" placeholder="R$ 0,00" autocomplete="off">
         </div>
-        <div style="text-align:center;margin-bottom:20px">
-          <button class="chip" id="fca-provisao-btn">Provisão</button>
-        </div>
-        <div class="row mb-16" style="gap:10px">
+        <div class="row mb-16" style="gap:10px;align-items:flex-end">
           <div style="flex:1">
             <div class="form-label">Data</div>
             <input id="fca-date" class="input" type="date">
           </div>
-          <div style="flex:1">
-            <div class="form-label">Pessoa</div>
-            <div class="chip-group" id="fca-person-chips">
-              <button class="chip" data-val="Felipe">Felipe</button>
-              <button class="chip" data-val="Teresa">Teresa</button>
-              <button class="chip" data-val="Casal">Casal</button>
-            </div>
-          </div>
+          <label class="fca-provisao-toggle" for="fca-provisao-check">
+            <input type="checkbox" id="fca-provisao-check">
+            <span>Provisão</span>
+          </label>
         </div>
-        <div id="fca-cat-section">
-          <div class="form-label mb-8">Categoria</div>
-          <div class="fca-cat-grid" id="fca-cat-grid"></div>
+        <div class="row mb-16" style="gap:10px">
+          <select id="fca-person-select" class="input" style="flex:1">
+            <option value="">Pessoa</option>
+            <option>Felipe</option>
+            <option>Teresa</option>
+            <option>Casal</option>
+          </select>
+          <select id="fca-cat-select" class="input" style="flex:1">
+            <option value="">Categoria</option>
+            <option>Moradia</option>
+            <option>Mercado</option>
+            <option>Alimentação</option>
+            <option>Transporte</option>
+            <option>Saúde</option>
+            <option>Lazer</option>
+            <option>Educação</option>
+            <option>Vestuário</option>
+            <option>Assinaturas</option>
+            <option>Investimento</option>
+            <option>Financeiro</option>
+            <option>Pet</option>
+            <option>Presente/Doação</option>
+            <option>Outros</option>
+          </select>
         </div>
         <div class="form-label mb-8">Pagamento</div>
         <div class="chip-group mb-16" id="fca-pay-chips">
@@ -260,16 +273,12 @@
         </div>
         <div id="fca-installment-section" class="hidden">
           <div class="form-label mb-8">Parcelamento</div>
-          <div id="fca-inst-wrap" style="background:var(--surface-raised);border-radius:var(--r-input);padding:12px 14px;margin-bottom:16px">
-            <div class="installment-row">
-              <span>Parcelar em</span>
-              <input type="number" id="fca-inst-count" class="installment-count" value="1" min="1" max="60">
-              <span>x</span>
-              <span id="fca-inst-per">R$ 0,00</span>
-              <span>/ mês</span>
-            </div>
-            <div class="installment-summary" id="fca-inst-summary"></div>
+          <div class="fca-inst-row mb-8">
+            <span class="fca-inst-label">Parcelar em</span>
+            <input type="number" id="fca-inst-count" class="installment-count" value="1" min="1" max="60">
+            <span class="fca-inst-label">parcelas</span>
           </div>
+          <div class="fca-inst-info" id="fca-inst-summary"></div>
         </div>
         <div class="form-group">
           <input id="fca-description" class="input" type="text" placeholder="Descrição (opcional)" autocomplete="off">

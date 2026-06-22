@@ -1,6 +1,5 @@
 import { showToast, exportCSV } from './utils.js';
 import { getTx, getBudget, setBudget } from './db.js';
-import { clearConfig } from './config.js';
 
 const THEME_KEY = 'gastinhos_theme';
 
@@ -11,7 +10,7 @@ export async function initAjustes(supabase) {
   document.querySelectorAll('.seg-btn[data-theme-val]').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.themeVal === saved);
     btn.addEventListener('click', () => {
-      document.querySelectorAll('.seg-btn[data-theme-val]').forEach(b=>b.classList.remove('active'));
+      document.querySelectorAll('.seg-btn[data-theme-val]').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       localStorage.setItem(THEME_KEY, btn.dataset.themeVal);
       applyTheme(btn.dataset.themeVal);
@@ -19,7 +18,7 @@ export async function initAjustes(supabase) {
   });
 
   // email
-  supabase.auth.getUser().then(({data}) => {
+  supabase.auth.getUser().then(({ data }) => {
     const el = document.getElementById('ajustes-email');
     if (el && data?.user?.email) el.textContent = data.user.email;
   });
@@ -30,15 +29,37 @@ export async function initAjustes(supabase) {
     const current = await getBudget();
     budgetInput.value = current;
     let saveTimer;
+    budgetInput.addEventListener('focus', () => {
+      // Show raw number on focus for easier editing
+      const val = parseFloat(budgetInput.value.replace(/\D/g, '') || '0');
+      budgetInput.value = val > 0 ? val : '';
+    });
+    budgetInput.addEventListener('blur', () => {
+      // Reformat on blur
+      const digits = budgetInput.value.replace(/\D/g, '');
+      const val = parseFloat(digits || '0');
+      if (val > 0) budgetInput.value = val;
+    });
     budgetInput.addEventListener('input', () => {
       clearTimeout(saveTimer);
       saveTimer = setTimeout(async () => {
-        const val = parseFloat(budgetInput.value);
+        const digits = budgetInput.value.replace(/\D/g, '');
+        const val = parseFloat(digits || '0');
         if (val > 0) {
           await setBudget(val);
           showToast('Orçamento salvo');
         }
       }, 800);
+    });
+  }
+
+  // accent color
+  const accentInput = document.getElementById('ajustes-accent');
+  if (accentInput) {
+    const savedColor = localStorage.getItem('gastinhos_accent') || '#6366F1';
+    accentInput.value = savedColor;
+    accentInput.addEventListener('input', () => {
+      applyAccent(accentInput.value);
     });
   }
 
@@ -54,12 +75,6 @@ export async function initAjustes(supabase) {
     exportCSV(all, 'gastinhos-completo.csv');
     showToast('CSV exportado');
   });
-
-  // reconfig
-  document.getElementById('ajustes-reconfig').addEventListener('click', () => {
-    clearConfig();
-    location.reload();
-  });
 }
 
 export function applyTheme(val) {
@@ -69,4 +84,14 @@ export function applyTheme(val) {
   } else {
     html.setAttribute('data-theme', val);
   }
+}
+
+export function applyAccent(hex) {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  document.documentElement.style.setProperty('--accent', hex);
+  document.documentElement.style.setProperty('--accent-soft', `rgba(${r},${g},${b},0.12)`);
+  document.documentElement.style.setProperty('--accent-fg', hex);
+  localStorage.setItem('gastinhos_accent', hex);
 }

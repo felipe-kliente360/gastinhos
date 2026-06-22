@@ -409,34 +409,27 @@ select.input { appearance: none; background-image: url("data:image/svg+xml,%3Csv
   margin: 0 auto 20px;
 }
 
-/* FCA type toggle */
-.fca-type-toggle {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-  margin-bottom: 20px;
-}
-.fca-type-btn {
-  height: 44px;
-  border: 2px solid var(--separator);
-  border-radius: var(--r-input);
-  background: transparent;
-  font-family: inherit;
-  font-size: 15px;
-  font-weight: 600;
+/* FCA provisão toggle */
+.fca-provisao-toggle {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
   cursor: pointer;
+  padding-bottom: 10px;
+}
+.fca-provisao-toggle input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+.fca-provisao-toggle span {
+  font-size: 11px;
   color: var(--text-2);
-  transition: all 0.15s;
-}
-.fca-type-btn.active-income {
-  border-color: var(--income-fg);
-  background: rgba(134,239,172,0.15);
-  color: var(--income-fg);
-}
-.fca-type-btn.active-expense {
-  border-color: var(--expense-fg);
-  background: rgba(252,165,165,0.15);
-  color: var(--expense-fg);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 /* FCA amount */
@@ -464,47 +457,25 @@ select.input { appearance: none; background-image: url("data:image/svg+xml,%3Csv
 }
 #fca-amount:focus { border-bottom-color: var(--accent); }
 
-/* FCA category grid */
-.fca-cat-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 6px;
-  margin-bottom: 16px;
-}
-.fca-cat-btn {
-  border: 1.5px solid var(--separator);
-  border-radius: var(--r-chip);
-  background: var(--surface-raised);
-  color: var(--text-2);
-  font-family: inherit;
-  font-size: 12px;
-  font-weight: 500;
-  padding: 8px 6px;
-  cursor: pointer;
-  text-align: center;
-  transition: all 0.15s;
-  -webkit-tap-highlight-color: transparent;
-}
-.fca-cat-btn.active {
-  border-color: var(--accent);
-  background: var(--accent-soft);
-  color: var(--accent-fg);
-}
-
 /* FCA installment */
-#fca-installment-section {
-  background: var(--surface-raised);
-  border-radius: var(--r-input);
-  padding: 12px 14px;
-  margin-bottom: 16px;
-}
-.installment-row {
+.fca-inst-row {
   display: flex;
   align-items: center;
   gap: 8px;
   font-size: 14px;
   color: var(--text-1);
+  margin-bottom: 8px;
 }
+.fca-inst-label { color: var(--text-2); }
+.fca-inst-info {
+  font-size: 12px;
+  color: var(--text-2);
+  padding: 8px 12px;
+  background: var(--surface-raised);
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+.fca-inst-info:empty { display: none; }
 .installment-count {
   width: 60px;
   text-align: center;
@@ -518,19 +489,17 @@ select.input { appearance: none; background-image: url("data:image/svg+xml,%3Csv
   color: var(--text-1);
   outline: none;
 }
-.installment-summary {
-  font-size: 12px;
-  color: var(--text-2);
-  margin-top: 8px;
-}
 
 /* ── HISTÓRICO TABLE ── */
 .hist-filters {
   background: var(--surface);
   border-radius: var(--r-card);
-  padding: 14px;
+  padding: 14px 14px;
   margin-bottom: 12px;
   display: none;
+  overflow: hidden;
+  box-sizing: border-box;
+  width: 100%;
 }
 .hist-filters.open { display: block; }
 .hist-table-wrap {
@@ -572,6 +541,7 @@ select.input { appearance: none; background-image: url("data:image/svg+xml,%3Csv
 .tx-amount { font-weight: 600; }
 .tx-amount.income { color: var(--income-fg); }
 .tx-amount.expense { color: var(--expense-fg); }
+.tx-amount.provisao-val { color: var(--text-3); font-style: italic; }
 .inst-badge {
   font-size: 10px;
   background: var(--accent-soft);
@@ -898,3 +868,29 @@ select.input { appearance: none; background-image: url("data:image/svg+xml,%3Csv
 .mt-16 { margin-top: 16px; }
 .mb-8 { margin-bottom: 8px; }
 .mb-16 { margin-bottom: 16px; }
+
+/* ── ROW DOTS BUTTON ── */
+.row-dots-btn {
+  background: none;
+  border: none;
+  font-size: 18px;
+  color: var(--text-3);
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  line-height: 1;
+  -webkit-tap-highlight-color: transparent;
+}
+.row-dots-btn:active { background: var(--surface-raised); }
+
+/* ── COLOR INPUT ── */
+.color-input {
+  width: 36px;
+  height: 28px;
+  border: none;
+  border-radius: 8px;
+  padding: 2px;
+  cursor: pointer;
+  background: none;
+  outline: none;
+}

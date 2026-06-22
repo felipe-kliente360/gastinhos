@@ -29,6 +29,12 @@ export async function deleteTx(id) {
   if (error) throw error;
 }
 
+export async function updateTx(id, updates) {
+  const { data, error } = await sb.from('transactions').update(updates).eq('id', id).select().single();
+  if (error) throw error;
+  return data;
+}
+
 export async function deleteGroup(groupId, fromDate) {
   let q = sb.from('transactions').delete().eq('installment_group_id', groupId);
   if (fromDate) q = q.gte('date', fromDate);

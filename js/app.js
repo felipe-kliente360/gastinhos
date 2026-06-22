@@ -3,7 +3,7 @@ import { initFCA } from './fca.js';
 import { initDashboard, loadDashboard } from './dashboard.js';
 import { initAnalise, loadAnalise } from './analise.js';
 import { initHistorico, loadHistorico } from './historico.js';
-import { initAjustes, applyTheme } from './ajustes.js';
+import { initAjustes, applyTheme, applyAccent } from './ajustes.js';
 import { init as initDb } from './db.js';
 
 const { createClient } = window.supabase;
@@ -23,8 +23,12 @@ window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e =
   }
 });
 
+// Apply saved accent color immediately
+const savedAccent = localStorage.getItem('gastinhos_accent');
+if (savedAccent) applyAccent(savedAccent);
+
 function show(id) {
-  ['screen-setup','screen-login','screen-app'].forEach(s => {
+  ['screen-setup', 'screen-login', 'screen-app'].forEach(s => {
     document.getElementById(s).classList.toggle('hidden', s !== id);
   });
 }
@@ -45,14 +49,14 @@ function setupScreen() {
     const url = document.getElementById('setup-url').value.trim();
     const key = document.getElementById('setup-key').value.trim();
     const err = document.getElementById('setup-error');
-    if (!url || !key) { err.textContent='Preencha os dois campos'; err.classList.add('visible'); return; }
+    if (!url || !key) { err.textContent = 'Preencha os dois campos'; err.classList.add('visible'); return; }
     saveConfig(url, key);
     sbClient = createClient(url, key);
     try {
       await sbClient.from('transactions').select('id').limit(1);
       initDb(sbClient);
       loginScreen();
-    } catch(e) {
+    } catch (e) {
       err.textContent = 'Conexão falhou: ' + e.message;
       err.classList.add('visible');
       clearConfig();
@@ -70,7 +74,6 @@ function loginScreen() {
     if (error) { err.textContent = error.message; err.classList.add('visible'); return; }
     appScreen();
   });
-  document.getElementById('setup-reset').addEventListener('click', () => { clearConfig(); setupScreen(); });
 }
 
 async function appScreen() {
@@ -84,6 +87,14 @@ async function appScreen() {
   setupTabs();
   lucide.createIcons();
   loadDashboard();
+
+  // Auto-refresh after FCA save
+  window.addEventListener('gastinhos:tx-saved', () => {
+    loadDashboard();
+    const activeTab = document.querySelector('.tab-item.active')?.dataset.tab;
+    if (activeTab === 'historico') loadHistorico();
+    else if (activeTab === 'analise') loadAnalise();
+  });
 }
 
 function setupTabs() {
@@ -93,9 +104,9 @@ function setupTabs() {
   document.querySelectorAll('.tab-item').forEach(btn => {
     btn.addEventListener('click', () => {
       const tab = btn.dataset.tab;
-      document.querySelectorAll('.tab-item').forEach(b=>b.classList.remove('active'));
+      document.querySelectorAll('.tab-item').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
-      document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
+      document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
       document.getElementById(`tab-${tab}`).classList.add('active');
       document.getElementById('header-title').textContent = titles[tab];
       // swap header controls
@@ -115,9 +126,9 @@ function setupTabs() {
           const filterFrom = document.getElementById('hist-date-from').value;
           const filterTo = document.getElementById('hist-date-to').value;
           const start = filterFrom ? filterFrom + '-01' : undefined;
-          const end = filterTo ? (() => { const [y,m] = filterTo.split('-'); return new Date(+y,+m,0).toISOString().slice(0,10); })() : undefined;
+          const end = filterTo ? (() => { const [y, m] = filterTo.split('-'); return new Date(+y, +m, 0).toISOString().slice(0, 10); })() : undefined;
           const rows = await getTx({ start, end });
-          exportCSV(rows, `gastinhos-${filterFrom||'todos'}.csv`);
+          exportCSV(rows, `gastinhos-${filterFrom || 'todos'}.csv`);
         });
       } else {
         ctrl.innerHTML = '';
