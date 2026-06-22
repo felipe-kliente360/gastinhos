@@ -66,9 +66,12 @@ export async function loadDashboard() {
   const provColor = pctTotal>=100 ? 'rgba(239,68,68,0.3)' : pctTotal>=80 ? 'rgba(245,158,11,0.3)' : 'rgba(99,102,241,0.25)';
 
   const catMap = {};
-  tx.filter(r=>r.status!=='provisao').forEach(r=>{ const c=r.category||'Outros'; catMap[c]=(catMap[c]||0)+Number(r.amount); });
-  const topCat = Object.entries(catMap).sort((a,b)=>b[1]-a[1])[0];
+  tx.forEach(r => { const c = r.category||'Outros'; catMap[c] = (catMap[c]||0) + Number(r.amount); });
+  const catEntries = Object.entries(catMap).sort((a,b) => b[1]-a[1]);
 
+  // Budget bar card (no KPI cards)
+  const realizadoLine = `<span style="color:var(--expense-fg);font-weight:600">${formatBRL(realizado)}</span><span style="color:var(--text-2)"> realizado</span>`;
+  const provisaoLine  = provisao > 0 ? ` <span style="color:var(--text-2)">+</span> <span style="color:var(--text-2);font-weight:500">${formatBRL(provisao)}</span><span style="color:var(--text-2)"> provisão</span>` : '';
   document.getElementById('dash-kpis').innerHTML = `
     ${overBudget ? `<div class="budget-alert${criticalOver?' critical':''}" style="grid-column:span 2">
       <i data-lucide="${criticalOver?'alert-octagon':'triangle-alert'}"></i>
@@ -85,43 +88,20 @@ export async function loadDashboard() {
         <div class="budget-bar-seg" style="width:${pctReal}%;background:${barColor}"></div>
         <div class="budget-bar-seg" style="width:${pctProv}%;background:${provColor}"></div>
       </div>
-      <div class="budget-bar-labels">
-        <span style="color:${barColor}">${formatBRL(realizado)} realizado</span>
-        ${provisao>0?`<span style="color:var(--text-3)">+${formatBRL(provisao)} provisão</span>`:''}
-        <span style="margin-left:auto;color:var(--text-2)">${formatBRL(budget)}</span>
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:8px;flex-wrap:wrap;gap:4px">
+        <span style="font-size:13px">${realizadoLine}${provisaoLine}</span>
+        <span style="font-size:12px;color:var(--text-2)">${formatBRL(budget)}</span>
       </div>
-    </div>
-    <div class="kpi-card">
-      <div class="kpi-label">Realizado</div>
-      <div class="kpi-value" style="color:${barColor}">${formatBRL(realizado)}</div>
-    </div>
-    <div class="kpi-card">
-      <div class="kpi-label">Provisão</div>
-      <div class="kpi-value" style="color:var(--text-2)">${formatBRL(provisao)}</div>
-    </div>
-    <div class="kpi-card">
-      <div class="kpi-label">Projetado</div>
-      <div class="kpi-value">${formatBRL(projetado)}</div>
-    </div>
-    <div class="kpi-card">
-      <div class="kpi-label">Disponível</div>
-      <div class="kpi-value ${disponivel<0?'negative':'positive'}">${formatBRL(Math.abs(disponivel))}${disponivel<0?' acima':''}</div>
-    </div>
-    ${topCat?`<div class="kpi-card" style="grid-column:span 2">
-      <div class="kpi-label">Maior Categoria</div>
-      <div class="kpi-value">${topCat[0]}</div>
-      <div class="kpi-sub">${formatBRL(topCat[1])} · ${realizado>0?(topCat[1]/realizado*100).toFixed(0):0}% do realizado</div>
-    </div>`:''}`;
+    </div>`;
   lucide.createIcons();
 
+  const catHeight = Math.max(140, catEntries.length * 28);
   document.getElementById('dash-charts').innerHTML = `
-    <div class="chart-section"><span class="chart-title">6 Meses — Realizado vs Provisão</span>
+    <div class="chart-section"><span class="chart-title">Despesas últimos 6 meses</span>
       <div class="chart-wrap"><div class="chart-canvas-wrap" style="height:200px"><canvas id="c-monthly"></canvas></div></div></div>
-    <div class="chart-section"><span class="chart-title">Por Categoria (realizado)</span>
-      <div class="chart-wrap"><div class="chart-canvas-wrap" style="height:180px"><canvas id="c-cat"></canvas></div></div></div>
-    <div class="chart-section"><span class="chart-title">Top Categorias</span>
-      <div class="chart-wrap"><div class="chart-canvas-wrap" style="height:160px"><canvas id="c-top"></canvas></div></div></div>
-    <div class="chart-section"><span class="chart-title">Por Pessoa</span>
+    <div class="chart-section"><span class="chart-title">Gastos por categoria</span>
+      <div class="chart-wrap"><div class="chart-canvas-wrap" style="height:${catHeight}px"><canvas id="c-top"></canvas></div></div></div>
+    <div class="chart-section"><span class="chart-title">Por pessoa</span>
       <div class="chart-wrap"><div class="chart-canvas-wrap" style="height:160px"><canvas id="c-person"></canvas></div></div></div>`;
 
   Object.values(chartInstances).forEach(c=>c.destroy()); chartInstances={};
@@ -148,23 +128,13 @@ export async function loadDashboard() {
         ticks:{callback:v=>v>=1000?`${(v/1000).toFixed(0)}k`:v}} } }
   });
 
-  // Category donut
-  const catEntries = Object.entries(catMap).sort((a,b)=>b[1]-a[1]);
+  // Category horizontal bar — all entries sorted desc
   if (catEntries.length) {
-    chartInstances.cat = new Chart(document.getElementById('c-cat'), {
-      type:'doughnut',
-      data:{labels:catEntries.map(e=>e[0]),datasets:[{data:catEntries.map(e=>e[1]),backgroundColor:COLORS.cats,borderWidth:0,hoverOffset:4}]},
-      options:{responsive:true,maintainAspectRatio:false,cutout:'68%',plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` ${ctx.label}: ${formatBRL(ctx.raw)}`}}}}
-    });
-  }
-
-  // Top 5 horizontal
-  const top5=catEntries.slice(0,5);
-  if (top5.length) {
     chartInstances.top = new Chart(document.getElementById('c-top'), {
       type:'bar',
-      data:{labels:top5.map(e=>e[0]),datasets:[{data:top5.map(e=>e[1]),backgroundColor:COLORS.cats.slice(0,5),borderRadius:6,borderSkipped:false}]},
-      options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      data:{labels:catEntries.map(e=>e[0]),datasets:[{data:catEntries.map(e=>e[1]),backgroundColor:COLORS.cats,borderRadius:4,borderSkipped:false}]},
+      options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},
+        tooltip:{callbacks:{label:ctx=>` ${formatBRL(ctx.raw)}`}}},
         scales:{x:{grid:{display:false},ticks:{callback:v=>v>=1000?`${(v/1000).toFixed(0)}k`:v}},y:{grid:{display:false}}}}
     });
   }
