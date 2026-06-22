@@ -92,7 +92,18 @@ function syncInstDisplay() {
   updateInstallmentCalc();
 }
 
+function buildPersonChips() {
+  const me = localStorage.getItem('gastinhos_default_person') || '';
+  const other = me === 'Felipe' ? 'Teresa' : me === 'Teresa' ? 'Felipe' : '';
+  const defs = me
+    ? [{ label: 'Eu', val: me }, { label: other, val: other }, { label: 'Casal', val: 'Casal' }]
+    : [{ label: 'Felipe', val: 'Felipe' }, { label: 'Teresa', val: 'Teresa' }, { label: 'Casal', val: 'Casal' }];
+  document.getElementById('fca-person-chips').innerHTML =
+    defs.map(c => `<button class="chip" data-val="${c.val}">${c.label}</button>`).join('');
+}
+
 function openFCA() {
+  buildPersonChips();
   const mem = (() => { try { return JSON.parse(localStorage.getItem(MEM_KEY)) || {}; } catch { return {}; } })();
   amountCents = 0; editId = null; installCount = 1;
 

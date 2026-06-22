@@ -422,8 +422,8 @@ select.input { appearance: none; background-image: url("data:image/svg+xml,%3Csv
 }
 .fca-date-person-row > div { flex: 1; min-width: 0; }
 #fca-date { width: 100%; min-width: 0; }
-#fca-person-chips { flex-wrap: nowrap; }
-#fca-person-chips .chip { flex: 1; text-align: center; }
+#fca-person-chips { flex-wrap: nowrap; width: 100%; gap: 4px; }
+#fca-person-chips .chip { flex: 1; text-align: center; min-width: 0; padding-left: 6px; padding-right: 6px; }
 
 /* FCA category chips – single-row horizontal scroll */
 #fca-cat-chips {
