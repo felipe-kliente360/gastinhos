@@ -2,7 +2,7 @@ import { addTx, addTxBatch, updateTx, getGrouped } from './db.js';
 import { todayStr, formatBRL, showToast, monthLabel, addMonths, lastNMonths } from './utils.js';
 
 const MEM_KEY = 'gastinhos_fca_mem';
-const ALL_CATS = ['Moradia','Mercado','Alimentação','Transporte','Saúde','Lazer','Educação','Vestuário','Assinaturas','Pet','Presente/Doação','Outros'];
+const ALL_CATS = ['Moradia','Mercado','Alimentação','Transporte','Saúde','Lazer','Educação','Crianças','Vestuário','Assinaturas','Pet','Amazon','Mercado Livre','Presente/Doação','Outros'];
 
 let currentPay = 'Crédito';
 let currentPerson = '';
